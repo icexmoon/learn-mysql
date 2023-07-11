@@ -1,5 +1,6 @@
 package com.example.procedure;
 
+import jakarta.persistence.ParameterMode;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.procedure.ProcedureCall;
@@ -57,5 +58,32 @@ public class StudentTests {
         int averageScore = (int) showScoreAvg.getOutputParameterValue("var_avg_score");
         int sumScore = (int) showScoreAvg.getOutputParameterValue("var_sum_score");
         System.out.println("averageScore:%d, sumScore:%d".formatted(averageScore, sumScore));
+    }
+
+    @Test
+    void test2() {
+        var result = this.callProcedureShowScoreAvg(true, 1, 300);
+        System.out.println("averageScore:%d, sumScore:%d".formatted(result.avgScore(), result.sumScore()));
+        result = this.callProcedureShowScoreAvg(false, 1, 300);
+        System.out.println("averageScore:%d, sumScore:%d".formatted(result.avgScore(), result.sumScore()));
+    }
+
+    ShowScoreAvgResult callProcedureShowScoreAvg(boolean cheat, int varMinId, int varMaxId) {
+        ProcedureCall showScoreAvg = session.createStoredProcedureCall("showScoreAvg");
+        showScoreAvg.registerParameter("cheat", Boolean.class, ParameterMode.IN);
+        showScoreAvg.registerParameter("var_min_id", Integer.class, ParameterMode.IN);
+        showScoreAvg.registerParameter("var_max_id", Integer.class, ParameterMode.IN);
+        showScoreAvg.registerParameter("var_avg_score", Integer.class, ParameterMode.OUT);
+        showScoreAvg.registerParameter("var_sum_score", Integer.class, ParameterMode.OUT);
+        showScoreAvg.setParameter("cheat", cheat);
+        showScoreAvg.setParameter("var_min_id", varMinId);
+        showScoreAvg.setParameter("var_max_id", varMaxId);
+        showScoreAvg.execute();
+        int averageScore = (int) showScoreAvg.getOutputParameterValue("var_avg_score");
+        int sumScore = (int) showScoreAvg.getOutputParameterValue("var_sum_score");
+        return new ShowScoreAvgResult(averageScore, sumScore);
+    }
+
+    public record ShowScoreAvgResult(int avgScore, int sumScore) {
     }
 }
